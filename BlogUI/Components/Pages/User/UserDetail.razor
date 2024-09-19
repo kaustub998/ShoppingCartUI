@@ -1,0 +1,148 @@
+﻿@page "/user/UserDetail"
+
+@using EcorpUI.Models
+@using EcorpUI.Services
+@using System.ComponentModel.DataAnnotations
+@using Blazored.LocalStorage;
+
+@inject AccountService accountService
+@inject NavigationManager navigationManager
+@inject IJSRuntime jsruntime
+@inject Common common
+@inject ILocalStorageService localStorage
+
+<h1>User Details</h1>
+
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-title {
+        color: #333;
+        font-size: 1.25rem;
+        font-weight: bold;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    .text-secondary {
+        color: #6c757d; /* Secondary text color */
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+        .btn-primary:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
+        }
+</style>
+
+
+@if (userDetail != null)
+{
+    <div class="container">
+        <div class="row">
+            <div class="col-md-9">
+                <div class="row justify-content-end">
+                    <div class="col-md-3">
+                        <button class="btn btn-primary" @onclick="EditUser">Edit</button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary" @onclick="DeleteUser">Delete</button>
+                    </div>
+                </div>
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">User Information</h5>
+                        <dl class="row">
+                            <dt class="col-sm-3 text-secondary">First Name</dt>
+                            <dd class="col-sm-9">@userDetail.firstName</dd>
+                            <dt class="col-sm-3 text-secondary">Last Name</dt>
+                            <dd class="col-sm-9">@userDetail.lastName</dd>
+                            <dt class="col-sm-3 text-secondary">Email</dt>
+                            <dd class="col-sm-9">@userDetail.email</dd>
+                            <dt class="col-sm-3 text-secondary">Date OF Birth</dt>
+                            <dd class="col-sm-9">@userDetail.dateOfBirth.ToString().Split(" ")[0]</dd>
+                            <dt class="col-sm-3 text-secondary">Gender</dt>
+                            <dd class="col-sm-9">@(userDetail.gender == 0 ? "Male" : "Female")</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private UserDetails userDetail;
+    private UserContext userContext = new UserContext();
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            if (userContext.isDeactivated == true)
+            {
+                await localStorage.RemoveItemAsync("userContext");
+                navigationManager.NavigateTo("/", forceLoad: true);
+            }
+            userDetail = await accountService.GetSingleUserDetail(userContext.userId);
+            StateHasChanged();
+        }
+    }
+
+    private void EditUser()
+    {
+        var parameters = new ModalParameters()
+            .Add(nameof(EcorpUI.Components.Pages.User.Modals.EditUser.userDetail), userDetail)
+            .Add(nameof(EcorpUI.Components.Pages.User.Modals.EditUser.Callback), EventCallback.Factory.Create<string>(this,
+        CallBack));
+
+        var options = new ModalOptions()
+            {
+                Size = ModalSize.Large
+            };
+
+        Modal.Show<EcorpUI.Components.Pages.User.Modals.EditUser>("Edit User", parameters, options);
+    }
+
+    private async Task DeleteUser()
+    {
+        var result = await accountService.DeactivateUser(userContext.userId);
+        if (result == true)
+        {
+            await localStorage.RemoveItemAsync("userContext");
+            navigationManager.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            navigationManager.NavigateTo("/BlogDashboard/dashboard");
+        }
+    }
+
+    public async Task CallBack(string? message)
+    {
+        if (message == "success")
+        {
+            userDetail = await accountService.GetSingleUserDetail(userContext.userId);
+            StateHasChanged();
+        }
+    }
+}

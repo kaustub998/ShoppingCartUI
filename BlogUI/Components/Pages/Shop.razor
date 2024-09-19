@@ -1,0 +1,202 @@
+﻿@page "/"
+
+@using EcorpUI.Models
+@using EcorpUI.Services
+@using Blazored.LocalStorage;
+
+@inject ItemService itemService
+@inject NavigationManager navigationManager
+@inject Common common
+@inject ILocalStorageService localStorage
+
+<style>
+    .blogs-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+    .pagination {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+        .pagination button {
+            padding: 8px 12px;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+            .pagination button:hover {
+                background-color: #f0f0f0;
+            }
+
+            .pagination button.active {
+                background-color: #007bff;
+                color: #fff;
+                border-color: #007bff;
+            }
+
+.blog-card {
+    width: calc(50% - 20px); /* Two cards in each row */
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff; /* White background */
+    transition: transform 0.3s ease;
+}
+
+    .blog-card:hover {
+        transform: scale(1.05); /* Enlarge on hover */
+    }
+
+    .blog-card h2 {
+        color: #333333; /* Dark text color */
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+
+    .blog-card p {
+        color: #666666; /* Medium gray text color */
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    .blog-card a {
+        color: #007bff; /* Blue link color */
+        text-decoration: none; /* Remove underline */
+        transition: color 0.3s ease; /* Smooth transition on hover */
+    }
+
+        .blog-card a:hover {
+            color: #0056b3; /* Darker blue color on hover */
+        }
+
+    .sort-buttons {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .sort-button {
+        padding: 8px 16px;
+        margin: 0 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .sort-button:hover {
+            background-color: #0056b3;
+        }
+</style>
+
+<div>
+    <div class="blogs-container">
+        @if (paginatedItems != null)
+        {
+            @foreach (var item in paginatedItems)
+            {
+                <div class="blog-card">
+                    <div>
+                        <h2>@item.itemName</h2>
+                        <p>@item.itemDescription</p>
+                        <p>By: @item.user_FullName</p>
+                        <p>Quantity: @item.itemQuantity</p>
+                        <p>Rate: @item.itemRate</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="@($"itemDetail?id={item.itemId}")">Read More</a>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>No blogs found.</p>
+        }
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <div class="pagination">
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                int pageIndex = i;
+
+                <button @onclick="() => NavigateToPage(pageIndex)" class="@(pageIndex == currentPage ? "active" : "")">@pageIndex</button>
+            }
+        </div>
+    }
+</div>
+
+
+@code{
+    private IEnumerable<Item> items { get; set; }
+    private UserContext userContext = new UserContext();
+
+    private int pageSize = 5;
+    private int currentPage = 1;
+    private int totalPages;
+    private IEnumerable<Item> paginatedItems;
+
+    protected override async Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+    }
+
+    private enum SortingOption
+    {
+        Random,
+        Recency,
+        Popularity
+    }
+
+    private SortingOption currentSortingOption = SortingOption.Recency;
+
+    private void CalculateTotalPages()
+    {
+        totalPages = (int)Math.Ceiling((double)items.Count() / pageSize);
+    }
+
+    // Handle navigation to different pages
+    void NavigateToPage(int page)
+    {
+        currentPage = Math.Max(1, Math.Min(page, totalPages)); // Ensure currentPage is within bounds
+        paginatedItems = items.Skip((currentPage - 1) * pageSize).Take(pageSize);
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            if (userContext.isDeactivated == true)
+            {
+                await localStorage.RemoveItemAsync("userContext");
+                navigationManager.NavigateTo("/", forceLoad: true);
+            }
+            await GetItemList();
+            CalculateTotalPages();
+            NavigateToPage(1);
+            StateHasChanged();
+        }
+    }
+
+    public async Task GetItemList()
+    {
+        items = await itemService.GetItemsListForShopPage();
+    }
+}

@@ -1,0 +1,158 @@
+﻿@page "/itemDetail"
+
+@using EcorpUI.Services;
+@using EcorpUI.Models;
+
+@inject ItemService itemService
+@inject NavigationManager NavManager
+@inject Common common
+
+<style>
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        background-color: #fff; /* Background color */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Box shadow for dropdown */
+        z-index: 1000; /* Ensure dropdown appears above other elements */
+    }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+    .dropdown:hover .dropdown-menu {
+        display: block;
+        margin-top: 0;
+    }
+
+    .dropup:hover {
+        display: block;
+        margin-top: 0;
+    }
+
+    .active {
+        background-color: #fff0a0;
+        border-radius: 50%; /* Make the border round */
+    }
+
+    .button-div {
+        background-color: #fff
+    }
+
+        .button-div:hover {
+            background-color: #fff0a0;
+        }
+
+    .dropdown-item-custom:hover {
+        background-color: #fff0a0;
+        cursor: pointer;
+        border-radius: 50%;
+    }
+
+    .btn-secondary.dropdown-toggle::after {
+        display: none;
+    }
+
+    .x-large {
+        font-size: 18px; /* Adjust the font size as needed */
+    }
+
+    .custom-color {
+        color: #ff5733;
+    }
+
+    .black-color {
+        color: #000;
+    }
+
+    .image-container {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px; /* Adjust as needed */
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px; /* Adjust margin as needed */
+        max-height: 600px;
+    }
+
+    .blog-image {
+        max-width: 40%;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+    In this
+    
+</style>
+
+<div class="container" style="width: 80%; margin 0 auto;">
+    @if (item != null)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h1 class="card-title">@item.itemName</h1>
+                <p class="card-text">@item.itemDescription</p>
+            </div>
+            <div class="image-container">
+                @foreach (var image in item.itemImageList)
+                {
+                    if (image.imageBytes != null)
+                    {
+                        <img src="@($"data:image/png;base64,{Convert.ToBase64String(image.imageBytes)}")" alt="Blog Image" class="blog-image" />
+                    }
+                }
+            </div>
+
+            <p class="card-text">Quantity: @item.itemQuantity</p>
+            <p class="card-text">Rate: @item.itemRate</p>
+        </div>
+
+    }
+</div>
+
+@code {
+    [Parameter] public Item? item { get; set; }
+    private UserContext userContext = new UserContext();
+
+    public int? itemId { get; set; }
+
+    private string commentText;
+    private bool showCommentSection = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(NavManager.Uri);
+        var userId = System.Web.HttpUtility.ParseQueryString(uri.Query).Get("id");
+        int value;
+        int.TryParse(userId, out value);
+
+        itemId = Convert.ToInt32(value);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+
+            await GetItem();
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task GetItem()
+    {
+        item = await itemService.GetItemDetail(itemId);
+    }
+
+    public async Task Callback(string message)
+    {
+        if (message == "success")
+        {
+            await this.GetItem();
+            StateHasChanged();
+        }
+    }
+}

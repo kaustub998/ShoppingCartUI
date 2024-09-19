@@ -1,0 +1,153 @@
+﻿@page "/Account/Login"
+@inherits LayoutComponentBase
+
+@using System.Text.Json;
+@using System.Text;
+@using EcorpUI.Models;
+@using EcorpUI.Services;
+@using Blazored.LocalStorage;
+@using Blazored.Toast.Services;
+@using System.Globalization;
+@using System.ComponentModel.DataAnnotations;
+@using Microsoft.AspNetCore.Mvc.TagHelpers;
+@using EcorpUI.Extensions;
+
+@inject Microsoft.Extensions.Configuration.IConfiguration config
+@inject NavigationManager NavManager
+@inject ILocalStorageService localStorage 
+@inject IJSRuntime jsruntime
+@inject Common common
+
+<style>
+    .form-container {
+        height: calc(100vh - 3.5rem);
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .form-box {
+        width: 350px;
+        padding: 30px;
+        background-color: #ffd;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-link {
+        color: #666;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+
+</style>
+
+<EditForm Model="loginDetail" FormName="LoginForm" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <div class="form-container">
+        <div class="form-box">
+            <h1>Login</h1>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <InputText type="email" class="form-control" id="email" @bind-Value="loginDetail.Email" placeholder="Enter email" />
+                <ValidationMessage For="@(() => loginDetail.Email)" />
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <InputText type="password" class="form-control" id="password" @bind-Value="loginDetail.Password" placeholder="Password" />
+                <ValidationMessage For="@(() => loginDetail.Password)" />
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+            <button type="button" class="btn btn-link" @onclick="ForgotPassword">Forgot Password?</button>
+        </div>
+    </div>
+</EditForm>
+
+
+@code {
+    [SupplyParameterFromForm]
+    public LoginDetail? loginDetail { get; set; } = new LoginDetail();
+    private UserContext userContext = new UserContext();
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            StateHasChanged();
+        }
+    }
+
+    private void ForgotPassword()
+    {
+        NavManager.NavigateTo("/forgotpassword");
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        HttpClient httpClient = new HttpClient();
+        var requestUrl = config["APIBaseUrl"] + "account/login";
+
+        using StringContent jsonContent = new(
+        JsonSerializer.Serialize(new
+        {
+            Email = loginDetail.Email.Trim(),
+            Password = @loginDetail.Password.Trim()
+        }),
+        Encoding.UTF8,
+        "application/json");
+
+        HttpResponseMessage response = await httpClient.PostAsync(requestUrl, jsonContent);
+        httpClient.Dispose();
+
+        using var responseStream = await response.Content.ReadAsStreamAsync();
+        UserContext userContext = await JsonSerializer.DeserializeAsync<UserContext>(responseStream);
+
+        if (!string.IsNullOrEmpty(userContext?.tokenId))
+        {
+            await localStorage.SetItemAsync("userContext", userContext);
+            jsruntime.ToastrSuccess("Login Successful");
+
+            if(userContext.isDeactivated == true)
+            {
+                NavManager.NavigateTo("/user/ReactivateUser", forceLoad: true);
+            }
+            else
+            {
+                NavManager.NavigateTo("/BlogDashboard/dashboard", forceLoad: true);
+            }
+        }
+        else
+        {
+            jsruntime.ToastrError(userContext.message);
+        }
+    }
+}

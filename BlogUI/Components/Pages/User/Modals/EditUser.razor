@@ -1,0 +1,209 @@
+﻿@page "/user/editUser"
+
+@using EcorpUI.Models;
+@using EcorpUI.Services;
+@using System.Text.Json;
+@using System.Text;
+@using Blazored.Toast.Services;
+@using System.Globalization;
+@using System.ComponentModel.DataAnnotations;
+@using EcorpUI.Extensions;
+
+@inject Microsoft.Extensions.Configuration.IConfiguration config
+@inject NavigationManager NavManager
+@inject AccountService accountService
+@inject IJSRuntime jsruntime
+@inject Common common
+@inject APIService apiService
+
+<style>
+    .form-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .form-box {
+        background-color: #ffd;
+        width: 550px; /* Increased width to accommodate two columns */
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .custom-checkbox {
+        width: 20px;
+        height: 20px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .btn-link {
+        color: #666;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+
+</style>
+
+
+<EditForm Model="userDetails" FormName="UserEdit" OnValidSubmit="@(() => HandleValidSubmit())">
+        <DataAnnotationsValidator />
+        <div class="form-container">
+            <div class="form-box">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <InputText class="form-control" type="text" id="firstName" @bind-Value="userDetails.firstName" placeholder="Enter first name" />
+                            <ValidationMessage For="@(() => userDetails.firstName)" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="lastName">Last Name</label>
+                            <InputText class="form-control" type="text" id="lastName" @bind-Value="userDetails.lastName" placeholder="Enter last name" />
+                            <ValidationMessage For="@(() => userDetails.lastName)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <InputText type="email" class="form-control" id="email" @bind-Value="userDetails.email" placeholder="Enter email" />
+                            <ValidationMessage For="@(() => userDetails.email)" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="dateOfBirth">Date of Birth</label>
+                            <InputDate class="form-control" id="dateOfBirth" @bind-Value="userDetails.dateOfBirth" />
+                            <ValidationMessage For="@(() => userDetails.dateOfBirth)" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <div>
+                                <label>
+                                    <InputRadioGroup @bind-Value="userDetails.gender">
+                                        <InputRadio Value="0" />
+                                        Male
+                                    </InputRadioGroup>
+                                </label>
+                            </div>
+                            <div>
+                                <label>
+                                    <InputRadioGroup @bind-Value="userDetails.gender">
+                                        <InputRadio Value="1" />
+                                        Female
+                                    </InputRadioGroup>
+                                </label>
+                            </div>
+                            <ValidationMessage For="@(() => userDetails.gender)" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        @if (userContext.userRoleId == true)
+                        {
+                            <div class="form-group">
+                                <label for="isAdmin" class="mr-2">Is Admin</label>
+                                <InputCheckbox id="isAdmin" class="custom-checkbox mt-1" @bind-Value="userDetails.isAdmin" />
+                                <ValidationMessage For="@(() => userDetails.isAdmin)" />
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" >Save Changes</button>
+            </div>
+        </div>
+    </EditForm>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [Parameter] public bool FromUserList { get; set; } = false;
+    [Parameter] public UserDetails userDetail { get; set; } = new UserDetails();
+
+    [SupplyParameterFromForm]
+    public UserEditDetails userDetails { get; set; } = new UserEditDetails();
+
+    [Parameter] public EventCallback<string> Callback { get; set; }
+
+    private UserContext userContext = new UserContext();
+
+    protected override async Task OnInitializedAsync()
+    {
+        userDetails.firstName = userDetail.firstName;
+        userDetails.lastName = userDetail.lastName;
+        userDetails.dateOfBirth = userDetail.dateOfBirth;
+        userDetails.gender = userDetail.gender;
+        userDetails.isAdmin = userDetail.isAdmin;
+        userDetails.email = userDetail.email;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            StateHasChanged();
+        }
+    }
+
+    public async Task HandleValidSubmit()
+    {
+        var requestUrl = config["APIBaseUrl"] + "account/editUser";
+
+        using StringContent jsonContent = new(
+        JsonSerializer.Serialize(new
+        {
+            UserId = userContext.userId,
+            FirstName = userDetails.firstName,
+            LastName = userDetails.lastName,
+            IsAdmin = userDetails.isAdmin,
+            Email = userDetails.email,
+            DateOfBirth = userDetails.dateOfBirth,
+            Gender = userDetails.gender,
+            ContactNumber = userDetails.contactNumber
+        }),
+        Encoding.UTF8,
+        "application/json");
+
+        using var responseStream = await apiService.PostAsync(requestUrl, jsonContent);
+
+        ResponseModel responseModel = await JsonSerializer.DeserializeAsync<ResponseModel>(responseStream);
+
+        if (responseModel.isSuccess == true)
+        {
+            jsruntime.ToastrSuccess("User Edited Successfully!!!");
+            Callback.InvokeAsync("success");
+            Close();
+        }
+        else
+        {
+            jsruntime.ToastrError(responseModel.message);
+        }
+    }
+
+    private async Task Close() => await BlazoredModal.CloseAsync();
+}

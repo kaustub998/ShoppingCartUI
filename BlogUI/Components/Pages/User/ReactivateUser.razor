@@ -1,0 +1,68 @@
+﻿@page "/user/ReactivateUser"
+
+@using System.Text.Json;
+@using System.Text;
+@using EcorpUI.Models;
+@using EcorpUI.Services;
+@using Blazored.LocalStorage;
+@using Blazored.Toast.Services;
+@using System.Globalization;
+@using System.ComponentModel.DataAnnotations;
+@using Microsoft.AspNetCore.Mvc.TagHelpers;
+@using EcorpUI.Extensions;
+
+@inject Microsoft.Extensions.Configuration.IConfiguration config
+@inject NavigationManager NavManager
+@inject ILocalStorageService localStorage
+@inject IJSRuntime jsruntime
+@inject Common common
+@inject AccountService account
+
+<h3>ReactivateUser</h3>
+
+<p>Are you sure you want to reactivate this user?</p>
+
+<div>
+    <button class="btn btn-primary" @onclick="UserReactivation">Yes</button>
+    <button class="btn btn-secondary" @onclick="Cancel">No</button>
+</div>
+
+@code {
+    private UserContext userContext = new UserContext();
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            StateHasChanged();
+        }
+    }
+
+    private async Task UserReactivation()
+    {
+        var result = await account.ReactivateUser(userContext.userId);
+        if (result == true)
+        {
+            jsruntime.ToastrSuccess("User Reactivated Successfully !!!");
+            userContext.isDeactivated = false;
+            await localStorage.SetItemAsync("userContext", userContext);
+            NavManager.NavigateTo("/BlogDashboard/dashboard", forceLoad: true);
+        }
+        else
+        {
+            await localStorage.RemoveItemAsync("userContext");
+            NavManager.NavigateTo("/", forceLoad: true);
+        }
+    }
+
+    private async Task Cancel()
+    {
+        await localStorage.RemoveItemAsync("userContext");
+        NavManager.NavigateTo("/", forceLoad: true);
+    }
+}

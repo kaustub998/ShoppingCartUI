@@ -1,0 +1,88 @@
+﻿@page "/user/userlist"
+
+@using EcorpUI.Models
+@using EcorpUI.Services
+@using Blazored.LocalStorage;
+@using System.ComponentModel.DataAnnotations
+
+@inject AccountService accountService
+@inject NavigationManager navigationManager
+@inject IJSRuntime jsruntime
+@inject Common common
+@inject ILocalStorageService localStorage
+
+@if (userDetails != null)
+{
+    <RadzenGrid TItem="UserDetails" Data="@userDetails">
+        <Columns>
+            <RadzenGridColumn TItem="UserDetails" Property="firstName" Title="First Name" />
+            <RadzenGridColumn TItem="UserDetails" Property="lastName" Title="Last Name" />
+            <RadzenGridColumn TItem="UserDetails" Property="email" Title="Email" />
+            <RadzenGridColumn TItem="UserDetails" Property="isDeactivated" Title="Deactivated" />
+            <RadzenGridColumn TItem="UserDetails" Title="Actions">
+                <Template Context="user">
+                    <RadzenButton Icon="edit" ButtonType="ButtonType.Button" Click="@(() => EditUser(user))" Style="margin-right: 5px;" />
+                    <RadzenButton Icon="delete" ButtonType="ButtonType.Button" Click="@(() => DeleteUser(user))" Style="margin-left: 5px;" />
+                </Template>
+            </RadzenGridColumn>
+        </Columns>
+    </RadzenGrid>
+}
+
+@code{
+    private IEnumerable<UserDetails> userDetails;
+    private UserContext userContext = new UserContext();
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            userDetails = await accountService.GetUserList();
+            StateHasChanged();
+        }
+    }
+
+    private void EditUser(UserDetails userDetail)
+    {
+        var parameters = new ModalParameters()
+            .Add(nameof(EcorpUI.Components.Pages.User.Modals.EditUser.userDetail), userDetail)
+            .Add(nameof(EcorpUI.Components.Pages.User.Modals.EditUser.Callback), EventCallback.Factory.Create<string>(this,
+        CallBack));
+
+        var options = new ModalOptions()
+            {
+                Size = ModalSize.Large
+            };
+
+        Modal.Show<EcorpUI.Components.Pages.User.Modals.EditUser>("Edit User", parameters, options);
+    }
+
+    private async Task DeleteUser(UserDetails userDetail)
+    {
+        var result = await accountService.DeactivateUser(userDetail.userId);
+        if (result == true)
+        {
+            await localStorage.RemoveItemAsync("userContext");
+            navigationManager.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            navigationManager.NavigateTo("/BlogDashboard/dashboard");
+        }
+    }
+
+    public async Task CallBack(string? message)
+    {
+        if (message == "success")
+        {
+            userDetails = await accountService.GetUserList();
+            StateHasChanged();
+        }
+    }
+}

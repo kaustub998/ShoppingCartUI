@@ -1,0 +1,208 @@
+﻿@page "/addeditblog"
+
+@using EcorpUI.Components
+@using EcorpUI.Services
+@using EcorpUI.Models
+@using EcorpUI.Extensions;
+
+@inject IJSRuntime jsruntime
+@inject ItemService BlogService
+@inject Common common
+
+<style>
+    .container {
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+    }
+
+    .btn-primary {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .text-center {
+        text-align: center;
+    }
+</style>
+
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="row">
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" class="form-control" placeholder="Enter item title" @bind="item.itemName" />
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea class="form-control" placeholder="Enter item description" rows="5" @bind="item.itemDescription"></textarea>
+            </div>
+
+            <InputFile id="profileimage" OnChange="HandleProfileChange" multiple accept=".png,.jpg,.jpeg,.gif,.tif" />
+
+            @if (item.itemImageList != null)
+            {
+                @foreach (var imageBytes in item.itemImageList)
+                {
+                    <div style="display: inline-block; margin-right: 10px;">
+                        <img src="@($"data:image/png;base64,{Convert.ToBase64String(imageBytes.imageBytes)}")" alt="Item Image" style="width:100px;height:100px;margin-bottom:5px;" />
+                        <button @onclick="() => RemoveImage(imageBytes)">Remove</button>
+                    </div>
+                }
+            }
+
+
+            <div class="text-center">
+                <button class="btn btn-primary btn-lg" @onclick="SaveBlog">Save</button>
+                <button class="btn btn-primary btn-lg" @onclick="Close">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    private UserContext userContext = new UserContext();
+
+    [Parameter] public Item item { get; set; } = new Item();
+    [Parameter] public EventCallback<string> Callback { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    private async Task HandleProfileChange(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles())
+        {
+            if (file.Size > 3 * 1024 * 1024) // 3 MB in bytes
+            {
+                jsruntime.ToastsWarning($"File '{file.Name}' is larger than 3 MB.");
+                continue; // Skip processing this file
+            }
+
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+
+            // Create a new BlogImage instance
+            var newImage = new ItemImage
+                {
+                    imageBytes = buffer
+                };
+
+            // Check if item.blogImages is null, if yes, initialize it with an empty list
+            if (item.itemImageList == null)
+            {
+                item.itemImageList = new List<ItemImage>();
+            }
+
+            // Add the new image to the list
+            var mutableBlogImages = item.itemImageList.ToList();
+
+            // Remove the image from the list
+            mutableBlogImages.Add(newImage);
+
+            // Assign the modified list back to item.blogImages
+            item.itemImageList = mutableBlogImages;
+        }
+
+        // Trigger UI refresh
+        StateHasChanged();
+    }
+
+    private void RemoveImage(ItemImage image)
+    {
+        if (item.itemImageList != null)
+        {
+            var mutableBlogImages = item.itemImageList.ToList();
+
+            // Remove the image from the list
+            mutableBlogImages.Remove(image);
+
+            // Assign the modified list back to item.blogImages
+            item.itemImageList = mutableBlogImages;
+
+            // Trigger UI refresh
+            StateHasChanged();
+        }
+    }
+
+    private async Task<string> ConvertFileToBase64(IBrowserFile file)
+    {
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream().ReadAsync(buffer);
+        return Convert.ToBase64String(buffer);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+        }
+    }
+
+    private async Task SaveBlog()
+    {
+        var newBlog = new Item
+            {
+                itemId = item.itemId,
+                itemName = item.itemName,
+                itemDescription = item.itemDescription,
+                itemQuantity = item.itemQuantity,
+                itemRate = item.itemRate,
+                userId = userContext.userId,
+                itemImageList = item.itemImageList,
+            };
+
+        ResponseModel response = await BlogService.AddEditBlog(newBlog);
+        Close();
+        await Callback.InvokeAsync("success");
+
+        if (response.isSuccess == true)
+        {
+            if (newBlog.itemId > 0)
+            {
+                jsruntime.ToastrSuccess("Item Edited Successful");
+            }
+            else
+            {
+                jsruntime.ToastrSuccess("Item Added Successful");
+            }
+        }
+        else
+        {
+            jsruntime.ToastrError(response.message);
+        }
+    }
+
+    private async Task Close() => await BlazoredModal.CloseAsync();
+}

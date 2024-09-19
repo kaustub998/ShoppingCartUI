@@ -1,0 +1,134 @@
+﻿@using EcorpUI.Services;
+@using EcorpUI.Models;
+@using Blazored.LocalStorage;
+@using EcorpUI.Extensions;
+
+@inherits LayoutComponentBase
+
+@inject Common common
+@inject ILocalStorageService localStorage
+@inject NavigationManager navManager
+@inject IJSRuntime jsruntime
+@inject ItemService blogService
+
+<style>
+    .dropdown-toggle {
+        color: #6c757d; /* Text color */
+        text-decoration: none; /* Remove underline */
+        padding: 10px
+    }
+
+        .dropdown-toggle:hover,
+        .dropdown-menu button:hover {
+            background-color: #f8f9aa; /* Light gray background on hover */
+            color: #343a40; /* Dark text color on hover */
+            text-decoration: none;
+        }
+
+
+</style>
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4" style="display: flex; justify-content: between; gap: 1rem; background-image: linear-gradient(270deg, rgb(245, 245, 240) 0%, #fff2a0 90%); padding: 1rem;">
+            @if (userContext.userId > 0)
+            {
+                <div class="dropdown">
+                    <a class="dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        @userContext.firstName @userContext.lastName
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                        <li><button class="dropdown-item" @onclick="UserDetail">User Detail</button></li>
+                        <li><button class="dropdown-item" @onclick="ChangePassword">Change Password</button></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><button class="dropdown-item" @onclick="LogOut">Log Out</button></li>
+                    </ul>
+                </div>
+
+            }
+            else
+            {
+                <div style="margin-right: 1rem;">
+                    <button class="p-1" @onclick="NavigateToLogin" style="color: #000; text-decoration: none; border: none; padding: 12px 20px; border-radius: 5px; background-color: #fff2a0; transition: background-color 0.3s; font-weight: bold; display: inline-block;">Login</button>
+                </div>
+                <div>
+                    <button class="p-1" @onclick="NavigateToRegister" style="color: #000; text-decoration: none; border: none; padding: 12px 20px; border-radius: 5px; background-color: #fff2a0; transition: background-color 0.3s; font-weight: bold; display: inline-block;">Register</button>
+                </div>
+            }
+        </div>
+
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code
+{
+    private UserContext userContext = new UserContext();
+    private string token = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    private void NavigateToItemDetail(int? itemId)
+    {
+        navManager.NavigateTo($"/itemDetail?id={itemId}");
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+            token = userContext.tokenId;
+            if (!string.IsNullOrEmpty(token) && !Common.IsTokenExpired(token))
+            {
+            }
+            else
+            {
+                await localStorage.RemoveItemAsync("userContext");
+            }
+            StateHasChanged();
+        }
+    }
+
+    public async Task LogOut()
+    {
+        await localStorage.RemoveItemAsync("userContext");
+        navManager.NavigateTo("/", forceLoad: true);
+    }
+
+    public void ChangePassword()
+    {
+        navManager.NavigateTo("/account/ChangePassword");
+    }
+
+    public void UserDetail()
+    {
+        navManager.NavigateTo("/user/UserDetail");
+    }
+
+    public void NavigateToLogin()
+    {
+        navManager.NavigateTo("/account/login");
+    }
+
+    public void NavigateToRegister()
+    {
+        navManager.NavigateTo("/account/register");
+    }
+}
