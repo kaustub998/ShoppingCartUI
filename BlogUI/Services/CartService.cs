@@ -33,19 +33,23 @@ namespace EcorpUI.Services
                 return null;
             }
         }
-        //public async Task<Decimal> GetCartTotalAsync(int? userId)
-        //{
-        //    var requestUrl = configuration["APIBaseUrl"] + $"Cart/GetCartTotal?userId={userId}";
-        //    var responseStream = await apiService.SendAsync(requestUrl, true);
-        //    if (responseStream != null)
-        //    {
-        //        return await JsonSerializer.DeserializeAsync<Decimal?>(responseStream);
-        //    }
-        //    else
-        //    {
-        //        return null;
-        //    }
-        //}
+       
+        public async Task<decimal?> GetCartTotalAsync(int? userId)
+        {
+            var requestUrl = configuration["APIBaseUrl"] + $"Cart/GetCartTotal?userId={userId}";
+            var responseStream = await apiService.SendAsync(requestUrl, true);
+
+            if (responseStream != null)
+            {
+                var result = await JsonSerializer.DeserializeAsync<decimal?>(responseStream);
+                return result;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
 
         public async Task<bool> RemoveCart(CartItemModel cartItem)
         {
@@ -54,7 +58,7 @@ namespace EcorpUI.Services
             if (confirmResult)
             {
                 var requestUrl = configuration["APIBaseUrl"] + $"Cart/RemoveFromCart?userId={cartItem.userId}&cartItemId={cartItem.cartItemId}";
-                return await apiService.DeleteAsync(requestUrl); // Assuming DeleteAsync returns a boolean
+                return await apiService.DeleteAsync(requestUrl); 
             }
             else
             {
@@ -74,6 +78,7 @@ namespace EcorpUI.Services
                 JsonSerializer.Serialize(new
                 {
                     itemId = cartItem.itemId,
+                    cartItemId = cartItem.cartItemId,
                     userId = cartItem.userId,
                     quantity = cartItem.quantity,
                 }),

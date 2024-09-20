@@ -1,10 +1,12 @@
 ﻿@page "/"
 
+@using EcorpAPI.Models
 @using EcorpUI.Models
 @using EcorpUI.Services
 @using Blazored.LocalStorage;
 
 @inject ItemService itemService
+@inject CartService cartService
 @inject NavigationManager navigationManager
 @inject Common common
 @inject ILocalStorageService localStorage
@@ -39,7 +41,7 @@
 
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <a href="@($"itemDetail?id={item.itemId}")" class="btn btn-outline-primary btn-sm">Read More</a>
-                                        <button class="btn btn-primary btn-sm" @onclick="@(() => AddToCart(item.itemId))">Add to Cart</button>
+                                        <button class="btn btn-primary btn-sm" @onclick="@(() => AddToCart(item))">Add to Cart</button>
                                     </div>
                                 </div>
                             </div>
@@ -50,7 +52,7 @@
         }
         else
         {
-            <p>No blogs found.</p>
+            <p>No Item found.</p>
         }
     </div>
 
@@ -77,9 +79,16 @@
     private int totalPages;
     private IEnumerable<Item> paginatedItems;
 
-    private void AddToCart(int itemId)
+    private async Task AddToCart(Item cartItem)
     {
+        var newData = new CartItemModel
+        {
+            itemId=cartItem.itemId,
+            quantity=cartItem.itemQuantity,
+            itemRate=cartItem.itemRate,
 
+        };
+        await cartService.AddToCart(newData);
     }
 
     protected override async Task OnInitializedAsync()

@@ -4,6 +4,7 @@
 @inject CartService CartService
 @inject NavigationManager NavigationManager
 
+
 <h3>Shopping Cart</h3>
 
 @if (cartItems == null)
@@ -16,42 +17,80 @@ else if (!cartItems.Any())
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Item</th>
-                <th>Price</th>
-                <th>Quantity</th>
-                <th>Total</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in cartItems)
-            {
-                <tr>
-                    <td>@item.itemId</td>
-                    <td>@item.quantity</td>
-                    <td>
-                        <input type="number" min="1" @bind="item.quantity" @bind:event="oninput" @onchange="() => UpdateQuantity(item)" />
-                    </td>
-                    <td>@((item.itemId * item.quantity))</td>
-                    <td>
-                        <button class="btn btn-danger" @onclick="() => RemoveCart(item)">Remove</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <RadzenDataGrid Data="@cartItems" TItem="CartItemModel" ColumnWidth="200px" Class="table">
+        <Columns>
+            <RadzenGridColumn TItem="CartItemModel" Property="image" Title="Image">
+                <Template Context="data">
+                    @{
+                        @if (data.image != null)
+                        {
+                            <div class="form-group">
+                                <img src="@($"data:image/png;base64,{Convert.ToBase64String(data.itemImageList.FirstOrDefault()?.image)}")" class="card-img-top" alt="@data.itemName" style="height: 180px; object-fit: cover;" />
+                            </div>
+                        }
+                    }
+                </Template>
+            </RadzenGridColumn>
+            <RadzenDataGridColumn TItem="CartItemModel" Property="itemName" Title="Item" />
+            <RadzenDataGridColumn TItem="CartItemModel" Property="itemRate" Title="Price"/>
+            @* <RadzenDataGridColumn TItem="CartItemModel" Title="Quantity">
+                <Template Context="item">
+                    <RadzenNumeric Min="1" @bind-Value="item.quantity" onchange="@(() => UpdateQuantity(item))"  />
+                </Template>
+            </RadzenDataGridColumn> *@
+            <RadzenDataGridColumn TItem="CartItemModel" Title="Quantity">
+                <Template Context="item">
+                    <div class="d-flex align-items-center">
+                        <RadzenButton Icon="remove"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Class="mr-1"
+                                      Click="@(() => DecrementQuantity(item))"
+                                      Disabled="@(item.quantity <= 1)" />
 
-    <p>Total: @cartTotal.ToString("C")</p>
-    <button class="btn btn-primary" @onclick="Checkout">Proceed to Checkout</button>
+                        <RadzenNumeric TValue="int"
+                                       Value="@(item.quantity ?? 1)"
+                                       Change="@(value => UpdateQuantity(item, value))"
+                                       Min="1"
+                                       Max="99"
+                                       Style="width: 70px;" />
+
+                        <RadzenButton Icon="add"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Class="ml-1"
+                                      Click="@(() => IncrementQuantity(item))"
+                                      Disabled="@(item.quantity >= 99)" />
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="CartItemModel" Title="Total">
+                <Template Context="item">
+                    @((item.itemRate * item.quantity).ToString())
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="CartItemModel" Title="Actions">
+                <Template Context="item">
+                    <RadzenButton Text="Remove" Icon="close" Click="@(args => RemoveCart(item))" ButtonStyle="ButtonStyle.Danger" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+        <FooterTemplate>
+            <div style="background-color: #f8f9fa; padding: 15px; border-top: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 1.2em; font-weight: bold;">Total:</span>
+                <span style="font-size: 1.5em; font-weight: bold; color: #28a745;">
+                    @(cartTotal.HasValue ? cartTotal.Value.ToString("C") : "$0.00")
+                </span>
+            </div>
+        </FooterTemplate>
+
+    </RadzenDataGrid>
+
+    <RadzenButton Text="Proceed to Checkout" Icon="payment" Click="Pay" ButtonStyle="ButtonStyle.Primary" />
 }
-
 @code {
+
     private IEnumerable<CartItemModel> cartItems=new List<CartItemModel>();
-    private decimal cartTotal;
-    private int userId = 1; // Replace with actual user ID retrieval logic
+    private decimal? cartTotal;
+    private int userId = 1; 
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,18 +103,11 @@ else
             StateHasChanged();
         }
     }
-     
-    private async Task LoadCart()
+    private async Task UpdateQuantity(CartItemModel item, int? newQuantity)
     {
-        cartItems = await CartService.GetCartItemsAsync(userId);
-        // cartTotal = await CartService.GetCartTotalAsync(userId);
-    }
-
-    private async Task UpdateQuantity(CartItemModel item)
-    {
+        item.quantity = newQuantity;
         var response = await CartService.AddToCart(item);
-
-        if (response != null && response.isSuccess == true) 
+        if (response != null && response.isSuccess == true)
         {
             await LoadCart();
         }
@@ -84,6 +116,44 @@ else
             Console.WriteLine("Failed to update the cart item quantity.");
         }
     }
+    private async Task DecrementQuantity(CartItemModel item)
+    {
+        if (item.quantity > 1)
+        {
+            item.quantity--;
+            await UpdateQuantity(item, item.quantity ?? 0);
+        }
+    }
+
+    private async Task IncrementQuantity(CartItemModel item)
+    {
+        if (item.quantity < 99)
+        {
+            item.quantity++;
+            await UpdateQuantity(item, item.quantity ?? 0);
+        }
+    }
+
+    private async Task LoadCart()
+    {
+        cartItems = await CartService.GetCartItemsAsync(userId);
+        cartTotal = await CartService.GetCartTotalAsync(userId);
+        StateHasChanged();
+    }
+
+    // private async Task UpdateQuantity(CartItemModel item)
+    // {
+    //     var response = await CartService.AddToCart(item);
+
+    //     if (response != null && response.isSuccess == true) 
+    //     {
+    //         await LoadCart();
+    //     }
+    //     else
+    //     {
+    //         Console.WriteLine("Failed to update the cart item quantity.");
+    //     }
+    // }
 
     private async Task RemoveCart(CartItemModel cartItem)
     {
@@ -101,12 +171,8 @@ else
         }
     }
 
-
-
-
-    private void Checkout()
+    private void Pay()
     {
-        // Implement checkout logic
-        // NavigationManager.NavigateTo("/checkout");
+       
     }
 }
