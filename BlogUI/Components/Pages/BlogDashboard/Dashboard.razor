@@ -102,7 +102,7 @@
 
     private UserContext userContext = new UserContext();
     private IEnumerable<Item> items { get; set; }
-    private IEnumerable<ConfirmedOrder> soldItems { get; set; }
+    private IEnumerable<ConfirmedOrder> soldItems { get; set; } = new List<ConfirmedOrder>();
 
 
     protected override async Task OnInitializedAsync()
