@@ -23,4 +23,18 @@ namespace EcorpUI.Models
         public bool isDeleted { get; set; }
         public byte[]? image { get; set; }
     }
+
+    public class ConfirmedOrder
+    {
+        public int confirmedOrderId { get; set; }
+        public int? buyerId { get; set; }
+        public int? itemId { get; set; }
+        public decimal? rate { get; set; }
+        public int? quantity { get; set; }
+        public DateTime? boughtDate { get; set; }
+        public string? transactionId { get; set; }
+        public decimal? total { get; set; }
+        public string? buyerName { get; set; }
+        public string? itemName { get; set; }
+    }
 }

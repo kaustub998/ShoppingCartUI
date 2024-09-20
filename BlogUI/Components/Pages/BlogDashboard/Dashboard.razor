@@ -6,6 +6,7 @@
 @using EcorpUI.Components.Pages.BlogDashboard.Modals;
 
 @inject ItemService itemService
+@inject CartService cartService
 @inject Common common
 @inject NavigationManager navManager
 @inject IModalService modal
@@ -63,11 +64,44 @@
     }
 </div>
 
+@if (soldItems.Count() > 0)
+{
+    <div>
+        <div>
+            Items Sold
+        </div>
+        <div>
+            <RadzenGrid TItem="ConfirmedOrder" Data="@soldItems">
+                <Columns>
+                   @*  <RadzenGridColumn TItem="ConfirmedOrder" Property="image" Title="Image">
+                        <Template Context="data">
+                            @{
+                                @if (data.image != null)
+                                {
+                                    <div class="form-group">
+                                        <img src="data:image/png;base64,@Convert.ToBase64String(data.image)" alt="User Image" style="width:150px; height:150px; object-fit:cover;" />
+                                    </div>
+                                }
+                            }
+                        </Template>
+                    </RadzenGridColumn> *@
+                    <RadzenGridColumn TItem="ConfirmedOrder" Property="buyerName" Title="Buyer" />
+                    <RadzenGridColumn TItem="ConfirmedOrder" Property="itemName" Title="Item" />
+                    <RadzenGridColumn TItem="ConfirmedOrder" Property="quantity" Title="Quantity" />
+                    <RadzenGridColumn TItem="ConfirmedOrder" Property="rate" Title="Rate" />
+                    <RadzenGridColumn TItem="ConfirmedOrder" Property="total" Title="Total" />
+                </Columns>
+            </RadzenGrid>
+        </div>
+    </div>
+}
+
 @code {
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
 
     private UserContext userContext = new UserContext();
     private IEnumerable<Item> items { get; set; }
+    private IEnumerable<ConfirmedOrder> soldItems { get; set; }
 
 
     protected override async Task OnInitializedAsync()
@@ -99,6 +133,11 @@
     public async Task GetItemList()
     {
         items = await itemService.GetItemListForDashboard();
+    }
+
+    public async Task GetItemSoldDetail()
+    {
+        soldItems = await cartService.GetItemSoldDetails();
     }
 
     private async Task DeleteHandler(Item args)

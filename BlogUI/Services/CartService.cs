@@ -108,5 +108,19 @@ namespace EcorpUI.Services
                 return new ResponseModel();
             }
         }
+
+        public async Task<List<ConfirmedOrder>> GetItemSoldDetails()
+        {
+            var requestUrl = configuration["APIBaseUrl"] + $"Cart/GetSoldItemsDetail";
+            var responseStream = await apiService.SendAsync(requestUrl, true);
+            if (responseStream != null)
+            {
+                return await JsonSerializer.DeserializeAsync<List<ConfirmedOrder>>(responseStream);
+            }
+            else
+            {
+                return new List<ConfirmedOrder>();
+            }
+        }
     }
 }
