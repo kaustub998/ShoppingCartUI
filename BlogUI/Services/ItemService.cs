@@ -61,7 +61,7 @@ namespace EcorpUI.Services
             }
         }
 
-        public async void DeleteBlog(Item item)
+        public async Task DeleteItem(Item item)
         {
             if (item.itemId > 0)
             {

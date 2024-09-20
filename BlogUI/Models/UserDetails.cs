@@ -38,6 +38,7 @@ namespace EcorpUI.Models
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^&()_+=-])[A-Za-z\d@$!%*?&#^&()_+=-]{8,}$",
         ErrorMessage = "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, one digit, and one special character.")]
         public string? password { get; set; }
+        public byte[]? image { get; set; }
     }
 
     public class UserEditDetails
@@ -65,6 +66,7 @@ namespace EcorpUI.Models
 
         [RegularExpression(@"^(\+\d{1,3}[- ]?)?\d{10}$", ErrorMessage = "Invalid phone number")]
         public string contactNumber { get; set; }
+        public byte[]? image { get; set; }
     }
 
     public class LoginDetail

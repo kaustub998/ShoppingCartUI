@@ -12,84 +12,55 @@
 @inject ILocalStorageService localStorage
 
 <style>
-    .blogs-container {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        margin-top: 20px;
-    }
-
     .item-card {
-        width: calc(50% - 20px); /* Two cards in each row */
-        margin-bottom: 20px;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        background-color: #ffffff; /* White background */
-        transition: transform 0.3s ease;
+        margin: 0; /* Remove margin if there's any */
     }
 
-        .item-card:hover {
-            transform: scale(1.05); /* Enlarge on hover */
-        }
-
-        .item-card h2 {
-            color: #333333; /* Dark text color */
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-
-        .item-card p {
-            color: #666666; /* Medium gray text color */
-            font-size: 16px;
-            line-height: 1.5;
-        }
-
-        .item-card a {
-            color: #007bff; /* Blue link color */
-            text-decoration: none; /* Remove underline */
-            transition: color 0.3s ease; /* Smooth transition on hover */
-        }
-
-            .item-card a:hover {
-                color: #0056b3; /* Darker blue color on hover */
-            }
+    .card {
+        margin-bottom: 0; /* Remove bottom margin from cards */
+    }
 </style>
 
 <div>
     <div class="d-flex justify-content-end mb-3">
         <RadzenButton Text="Add Item" Click="@AddBlog" Style="margin-right: 10px;" />
     </div>
-    <div class="blogs-container">
-        @if (items != null && items.Any())
-        {
-            @foreach (var item in items)
-            {
-                <div class="item-card">
-                    <div>
-                        <h2>@item.itemName</h2>
-                        <p>@item.itemDescription</p>
-                        <p>By: @item.user_FullName</p>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <a href="/itemDetail?id=@item.itemId">Read More</a>
-                        <div>
-                            @if(userContext.userRoleId == true || userContext.userId == item.userId)
-                            {
-                                <RadzenIcon Icon="edit" Title="Edit" @onclick="@(()=> UpdateHandler(item))" Style="font-weight: 400; cursor:pointer;">
-                                </RadzenIcon>
-                                <RadzenIcon Icon="delete" Title="Edit" @onclick="@(()=> DeleteHandler(item))" Style="font-weight: 400; cursor:pointer;" />
-                            }
+    @if (items != null && items.Any())
+    {
+
+        <div class="container">
+            <div class="row">
+                @foreach (var item in items)
+                {
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="item-card card shadow-sm">
+                            <img src="@($"data:image/png;base64,{Convert.ToBase64String(item.itemImageList.FirstOrDefault()?.image)}")" class="card-img-top" alt="@item.itemName" style="height: 180px; object-fit: cover;" />
+                            <div class="card-body">
+                                <h5 class="card-title">@item.itemName</h5>
+                                <p class="card-text text-muted">@item.itemDescription</p>
+                                <p class="card-text"><strong>By:</strong> @item.user_FullName</p>
+
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <a href="/itemDetail?id=@item.itemId" class="btn btn-outline-primary btn-sm">Read More</a>
+                                    <div>
+                                        @if (userContext.userRoleId == true || userContext.userId == item.userId)
+                                        {
+                                            <RadzenIcon Icon="edit" Title="Edit" @onclick="@(() => UpdateHandler(item))" Style="font-weight: 400; cursor:pointer;" />
+                                            <RadzenIcon Icon="delete" Title="Delete" @onclick="@(() => DeleteHandler(item))" Style="font-weight: 400; cursor:pointer;" />
+                                        }
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }
-        }
-        else
-        {
-            <p>No blogs found.</p>
-        }
-    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <p>No blogs found.</p>
+    }
 </div>
 
 @code {
@@ -108,7 +79,7 @@
         if (firstRender)
         {
             userContext = await common.GetUserContext();
-            if(userContext.isDeactivated == true)
+            if (userContext.isDeactivated == true)
             {
                 await localStorage.RemoveItemAsync("userContext");
                 navManager.NavigateTo("/", forceLoad: true);
@@ -132,7 +103,7 @@
 
     private async Task DeleteHandler(Item args)
     {
-        itemService.DeleteBlog(args);
+        await itemService.DeleteItem(args);
         await GetItemList();
         StateHasChanged();
     }
@@ -140,21 +111,21 @@
     private async Task UpdateHandler(Item args)
     {
         var parameters = new ModalParameters()
-            .Add(nameof(AddEditItem.item) , args)
+            .Add(nameof(AddEditItem.item), args)
             .Add(nameof(AddEditItem.Callback), EventCallback.Factory.Create<string>(this,
         CallBack));
 
         var options = new ModalOptions()
-        {
-            Size = ModalSize.Large
-        };
+            {
+                Size = ModalSize.Large
+            };
 
         Modal.Show<AddEditItem>("Edit Item", parameters, options);
     }
 
     public async Task CallBack(string? message)
     {
-        if(message == "success")
+        if (message == "success")
         {
             await GetItemList();
             StateHasChanged();
@@ -168,10 +139,10 @@
         CallBack));
 
         var options = new ModalOptions()
-        {
-            Size = ModalSize.Large
-        };
-        
-        Modal.Show<AddEditItem>("Add Item", parameters,options);
+            {
+                Size = ModalSize.Large
+            };
+
+        Modal.Show<AddEditItem>("Add Item", parameters, options);
     }
 }

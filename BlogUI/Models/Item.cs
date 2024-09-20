@@ -20,8 +20,7 @@ namespace EcorpUI.Models
     {
         public int imageId { get; set; }
         public int? itemId { get; set; }
-        public string? imagePath { get; set; }
         public bool isDeleted { get; set; }
-        public byte[]? imageBytes { get; set; }
+        public byte[]? image { get; set; }
     }
 }

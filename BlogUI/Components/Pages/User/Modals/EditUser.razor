@@ -63,81 +63,99 @@
 
 
 <EditForm Model="userDetails" FormName="UserEdit" OnValidSubmit="@(() => HandleValidSubmit())">
-        <DataAnnotationsValidator />
-        <div class="form-container">
-            <div class="form-box">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="firstName">First Name</label>
-                            <InputText class="form-control" type="text" id="firstName" @bind-Value="userDetails.firstName" placeholder="Enter first name" />
-                            <ValidationMessage For="@(() => userDetails.firstName)" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="lastName">Last Name</label>
-                            <InputText class="form-control" type="text" id="lastName" @bind-Value="userDetails.lastName" placeholder="Enter last name" />
-                            <ValidationMessage For="@(() => userDetails.lastName)" />
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <InputText type="email" class="form-control" id="email" @bind-Value="userDetails.email" placeholder="Enter email" />
-                            <ValidationMessage For="@(() => userDetails.email)" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="dateOfBirth">Date of Birth</label>
-                            <InputDate class="form-control" id="dateOfBirth" @bind-Value="userDetails.dateOfBirth" />
-                            <ValidationMessage For="@(() => userDetails.dateOfBirth)" />
-                        </div>
-                    </div>
-                </div>
+    <DataAnnotationsValidator />
+    <div class="form-container">
+        <div class="form-box">
+            <div class="row">
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="form-group">
-                            <label>Gender</label>
-                            <div>
-                                <label>
-                                    <InputRadioGroup @bind-Value="userDetails.gender">
-                                        <InputRadio Value="0" />
-                                        Male
-                                    </InputRadioGroup>
-                                </label>
-                            </div>
-                            <div>
-                                <label>
-                                    <InputRadioGroup @bind-Value="userDetails.gender">
-                                        <InputRadio Value="1" />
-                                        Female
-                                    </InputRadioGroup>
-                                </label>
-                            </div>
-                            <ValidationMessage For="@(() => userDetails.gender)" />
+                            <label for="userImage">Upload Image</label>
+                            <InputFile OnChange="@HandleImageUpload" />
+                            <ValidationMessage For="@(() => userDetail.image)" />
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        @if (userContext.userRoleId == true)
+
+                        @if (userDetail.image != null)
                         {
                             <div class="form-group">
-                                <label for="isAdmin" class="mr-2">Is Admin</label>
-                                <InputCheckbox id="isAdmin" class="custom-checkbox mt-1" @bind-Value="userDetails.isAdmin" />
-                                <ValidationMessage For="@(() => userDetails.isAdmin)" />
+                                <img src="data:image/png;base64,@Convert.ToBase64String(userDetail.image)" alt="User Image" style="width:150px; height:150px; object-fit:cover;" />
                             </div>
                         }
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" >Save Changes</button>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <InputText class="form-control" type="text" id="firstName" @bind-Value="userDetails.firstName" placeholder="Enter first name" />
+                        <ValidationMessage For="@(() => userDetails.firstName)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <InputText class="form-control" type="text" id="lastName" @bind-Value="userDetails.lastName" placeholder="Enter last name" />
+                        <ValidationMessage For="@(() => userDetails.lastName)" />
+                    </div>
+                </div>
             </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <InputText type="email" class="form-control" id="email" @bind-Value="userDetails.email" placeholder="Enter email" />
+                        <ValidationMessage For="@(() => userDetails.email)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="dateOfBirth">Date of Birth</label>
+                        <InputDate class="form-control" id="dateOfBirth" @bind-Value="userDetails.dateOfBirth" />
+                        <ValidationMessage For="@(() => userDetails.dateOfBirth)" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <div>
+                            <label>
+                                <InputRadioGroup @bind-Value="userDetails.gender">
+                                    <InputRadio Value="0" />
+                                    Male
+                                </InputRadioGroup>
+                            </label>
+                        </div>
+                        <div>
+                            <label>
+                                <InputRadioGroup @bind-Value="userDetails.gender">
+                                    <InputRadio Value="1" />
+                                    Female
+                                </InputRadioGroup>
+                            </label>
+                        </div>
+                        <ValidationMessage For="@(() => userDetails.gender)" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    @if (userContext.userRoleId == true)
+                    {
+                        <div class="form-group">
+                            <label for="isAdmin" class="mr-2">Is Admin</label>
+                            <InputCheckbox id="isAdmin" class="custom-checkbox mt-1" @bind-Value="userDetails.isAdmin" />
+                            <ValidationMessage For="@(() => userDetails.isAdmin)" />
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
-    </EditForm>
+    </div>
+</EditForm>
 
 @code {
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
@@ -151,6 +169,12 @@
 
     private UserContext userContext = new UserContext();
 
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        var uploadedFile = e.File;
+        userDetails.image = await accountService.HandleImageUpload(uploadedFile);
+    }
+
     protected override async Task OnInitializedAsync()
     {
         userDetails.firstName = userDetail.firstName;
@@ -159,6 +183,7 @@
         userDetails.gender = userDetail.gender;
         userDetails.isAdmin = userDetail.isAdmin;
         userDetails.email = userDetail.email;
+        userDetails.image = userDetail.image;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -184,7 +209,8 @@
             Email = userDetails.email,
             DateOfBirth = userDetails.dateOfBirth,
             Gender = userDetails.gender,
-            ContactNumber = userDetails.contactNumber
+            ContactNumber = userDetails.contactNumber,
+            image = userDetails.image,
         }),
         Encoding.UTF8,
         "application/json");

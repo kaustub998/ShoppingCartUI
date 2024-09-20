@@ -3,6 +3,8 @@ using System.Text.Json;
 using EcorpUI.Models;
 using EcorpUI.Extensions;
 using System.Text;
+using EcorpUI.Components.Pages.User;
+using Microsoft.AspNetCore.Components.Forms;
 
 namespace EcorpUI.Services
 {
@@ -17,6 +19,26 @@ namespace EcorpUI.Services
             this.apiService = apiService;
             this.configuration = configuration;
             this.JS = jS;
+        }
+
+        public async Task<byte[]> HandleImageUpload(IBrowserFile? uploadedFile)
+        {
+            if (uploadedFile != null)
+            {
+                const long maxFileSize = 1024 * 1024 * 2; // 2 MB limit
+
+                if (uploadedFile.Size > maxFileSize)
+                {
+                    return new byte[0];
+                }
+
+                using (var memoryStream = new MemoryStream())
+                {
+                    await uploadedFile.OpenReadStream(maxFileSize).CopyToAsync(memoryStream);
+                    return memoryStream.ToArray();
+                }
+            }
+            return new byte[0];
         }
 
         public async Task<IEnumerable<UserDetails>> GetUserList()
