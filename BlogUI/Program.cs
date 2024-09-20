@@ -19,6 +19,7 @@ builder.Services.AddBlazoredModal();
 builder.Services.AddScoped<Common>();
 builder.Services.AddScoped<APIService>();
 builder.Services.AddScoped<ItemService>();
+builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<RegisterLoginService>();
 builder.Services.AddScoped<AccountService>();
 

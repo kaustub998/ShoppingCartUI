@@ -1,0 +1,112 @@
+﻿@page "/cart"
+@using EcorpAPI.Models
+@using EcorpUI.Services
+@inject CartService CartService
+@inject NavigationManager NavigationManager
+
+<h3>Shopping Cart</h3>
+
+@if (cartItems == null)
+{
+    <p>Loading...</p>
+}
+else if (!cartItems.Any())
+{
+    <p>Your cart is empty.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in cartItems)
+            {
+                <tr>
+                    <td>@item.itemId</td>
+                    <td>@item.quantity</td>
+                    <td>
+                        <input type="number" min="1" @bind="item.quantity" @bind:event="oninput" @onchange="() => UpdateQuantity(item)" />
+                    </td>
+                    <td>@((item.itemId * item.quantity))</td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="() => RemoveCart(item)">Remove</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <p>Total: @cartTotal.ToString("C")</p>
+    <button class="btn btn-primary" @onclick="Checkout">Proceed to Checkout</button>
+}
+
+@code {
+    private IEnumerable<CartItemModel> cartItems=new List<CartItemModel>();
+    private decimal cartTotal;
+    private int userId = 1; // Replace with actual user ID retrieval logic
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCart();
+            StateHasChanged();
+        }
+    }
+     
+    private async Task LoadCart()
+    {
+        cartItems = await CartService.GetCartItemsAsync(userId);
+        // cartTotal = await CartService.GetCartTotalAsync(userId);
+    }
+
+    private async Task UpdateQuantity(CartItemModel item)
+    {
+        var response = await CartService.AddToCart(item);
+
+        if (response != null && response.isSuccess == true) 
+        {
+            await LoadCart();
+        }
+        else
+        {
+            Console.WriteLine("Failed to update the cart item quantity.");
+        }
+    }
+
+    private async Task RemoveCart(CartItemModel cartItem)
+    {
+        if (cartItem.cartItemId > 0)
+        {
+            bool isSuccess = await CartService.RemoveCart(cartItem);
+
+            if (isSuccess)
+            {
+                await LoadCart(); 
+            }
+            else
+            {
+            }
+        }
+    }
+
+
+
+
+    private void Checkout()
+    {
+        // Implement checkout logic
+        // NavigationManager.NavigateTo("/checkout");
+    }
+}
