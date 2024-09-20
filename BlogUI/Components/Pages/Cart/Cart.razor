@@ -1,8 +1,11 @@
 ﻿@page "/cart"
 @using EcorpAPI.Models
 @using EcorpUI.Services
+@using EcorpUI.Extensions;
+
 @inject CartService CartService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime jsruntime
 
 <h3>Shopping Cart</h3>
 
@@ -64,7 +67,7 @@ else
             StateHasChanged();
         }
     }
-     
+
     private async Task LoadCart()
     {
         cartItems = await CartService.GetCartItemsAsync(userId);
@@ -101,12 +104,16 @@ else
         }
     }
 
-
-
-
-    private void Checkout()
+    private async Task Checkout()
     {
-        // Implement checkout logic
-        // NavigationManager.NavigateTo("/checkout");
+        var response = await CartService.CheckoutCart();
+        if(response.isSuccess == true)
+        {
+            jsruntime.ToastrSuccess(response.message);
+        }
+        else
+        {
+            jsruntime.ToastrError(response.message);
+        }
     }
 }

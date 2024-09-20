@@ -94,5 +94,19 @@ namespace EcorpUI.Services
             }
 
         }
+
+        public async Task<ResponseModel> CheckoutCart()
+        {
+            var requestUrl = configuration["APIBaseUrl"] + $"Cart/CheckoutCart";
+            var responseStream = await apiService.SendAsync(requestUrl, true);
+            if (responseStream != null)
+            {
+                return await JsonSerializer.DeserializeAsync<ResponseModel>(responseStream);
+            }
+            else
+            {
+                return new ResponseModel();
+            }
+        }
     }
 }
