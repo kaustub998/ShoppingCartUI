@@ -1,8 +1,11 @@
 ﻿@page "/cart"
 @using EcorpAPI.Models
 @using EcorpUI.Services
+@using EcorpUI.Extensions;
+
 @inject CartService CartService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime jsruntime
 
 
 <h3>Shopping Cart</h3>
@@ -84,7 +87,7 @@ else
 
     </RadzenDataGrid>
 
-    <RadzenButton Text="Proceed to Checkout" Icon="payment" Click="Pay" ButtonStyle="ButtonStyle.Primary" />
+    <RadzenButton Text="Proceed to Checkout" Icon="payment" Click="Checkout" ButtonStyle="ButtonStyle.Primary" />
 }
 @code {
 
@@ -103,6 +106,7 @@ else
             StateHasChanged();
         }
     }
+
     private async Task UpdateQuantity(CartItemModel item, int? newQuantity)
     {
         item.quantity = newQuantity;
@@ -165,14 +169,23 @@ else
             {
                 await LoadCart(); 
             }
+
             else
             {
             }
         }
     }
 
-    private void Pay()
+    private async Task Checkout()
     {
-       
+        var response = await CartService.CheckoutCart();
+        if(response.isSuccess == true)
+        {
+            jsruntime.ToastrSuccess(response.message);
+        }
+        else
+        {
+            jsruntime.ToastrError(response.message);
+        }
     }
 }

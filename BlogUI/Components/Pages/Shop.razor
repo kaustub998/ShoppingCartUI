@@ -22,6 +22,21 @@
 </style>
 
 <div>
+    <div class="container">
+        <div class="row justify-content-start">
+            <div class="col-md-4 col-sm-6 col-12 mb-3">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search..." @bind="searchString" />
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" @onclick="HandleSearch">Search</button>
+                        <button class="btn btn-secondary" @onclick="ClearSearch">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div class="blogs-container">
         @if (paginatedItems != null)
         {
@@ -74,10 +89,11 @@
     private IEnumerable<Item> items { get; set; }
     private UserContext userContext = new UserContext();
 
-    private int pageSize = 5;
+    private int pageSize = 10;
     private int currentPage = 1;
     private int totalPages;
     private IEnumerable<Item> paginatedItems;
+    private string searchString = "";
 
     private async Task AddToCart(Item cartItem)
     {
@@ -99,6 +115,32 @@
     private void CalculateTotalPages()
     {
         totalPages = (int)Math.Ceiling((double)items.Count() / pageSize);
+    }
+
+    void HandleSearch()
+    {
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var filteredItems = items
+                .Where(item => item.itemName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                               item.user_FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            totalPages = (int)Math.Ceiling(filteredItems.Count() / (double)pageSize);
+            currentPage = 1; // Reset to first page after search
+            paginatedItems = filteredItems.Skip((currentPage - 1) * pageSize).Take(pageSize);
+        }
+        else
+        {
+            paginatedItems = items.Skip((currentPage - 1) * pageSize).Take(pageSize);
+        }
+
+        StateHasChanged();
+    }
+
+    void ClearSearch()
+    {
+        paginatedItems = items;
     }
 
     // Handle navigation to different pages
