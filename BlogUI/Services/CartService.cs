@@ -51,20 +51,50 @@ namespace EcorpUI.Services
         }
 
 
-        public async Task<bool> RemoveCart(CartItemModel cartItem)
+        //public async Task<bool> RemoveCart(CartItemModel cartItem)
+        //{
+        //    bool confirmResult = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to remove the item?");
+
+        //    if (confirmResult)
+        //    {
+        //        var requestUrl = configuration["APIBaseUrl"] + $"Cart/RemoveFromCart?userId={cartItem.userId}&cartItemId={cartItem.cartItemId}";
+        //        return await apiService.DeleteAsync(requestUrl); 
+        //    }
+        //    else
+        //    {
+        //        return false;
+        //    }
+        //}
+
+        public async Task<ResponseModel> RemoveCart(CartItemModel cartItem)
         {
             bool confirmResult = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to remove the item?");
 
             if (confirmResult)
             {
-                var requestUrl = configuration["APIBaseUrl"] + $"Cart/RemoveFromCart?userId={cartItem.userId}&cartItemId={cartItem.cartItemId}";
-                return await apiService.DeleteAsync(requestUrl); 
+                var requestUrl = $"{configuration["APIBaseUrl"]}Cart/RemoveFromCart?userId={cartItem.userId}&cartItemId={cartItem.cartItemId}";
+
+                var response = await apiService.DeleteAsync(requestUrl);
+
+                if (response == true)
+                {
+                    return new ResponseModel { isSuccess = true, message = "Item removed successfully." };
+                }
+                else
+                {
+                    return new ResponseModel
+                    {
+                        isSuccess = false,
+                        isError = true,
+                    };
+                }
             }
             else
             {
-                return false;
+                return new ResponseModel { isSuccess = false, message = "Removal cancelled." };
             }
         }
+
 
         public async Task<ResponseModel> AddToCart(CartItemModel cartItem)
         {

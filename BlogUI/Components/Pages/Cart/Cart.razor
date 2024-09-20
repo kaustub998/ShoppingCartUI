@@ -145,27 +145,15 @@ else
         StateHasChanged();
     }
 
-    // private async Task UpdateQuantity(CartItemModel item)
-    // {
-    //     var response = await CartService.AddToCart(item);
-
-    //     if (response != null && response.isSuccess == true) 
-    //     {
-    //         await LoadCart();
-    //     }
-    //     else
-    //     {
-    //         Console.WriteLine("Failed to update the cart item quantity.");
-    //     }
-    // }
 
     private async Task RemoveCart(CartItemModel cartItem)
     {
         if (cartItem.cartItemId > 0)
         {
-            bool isSuccess = await CartService.RemoveCart(cartItem);
+           
+            var response = await CartService.RemoveCart(cartItem);
 
-            if (isSuccess)
+            if (response.isSuccess == true)
             {
                 await LoadCart(); 
             }

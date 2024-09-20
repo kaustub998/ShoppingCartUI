@@ -60,20 +60,21 @@
     }
     else
     {
-        <p>No blogs found.</p>
+        <p>No item found.</p>
     }
 </div>
-
-@if (soldItems.Count() > 0)
+@if (soldItems != null)
 {
-    <div>
+    @if (soldItems.Count() > 0)
+    {
         <div>
-            Items Sold
-        </div>
-        <div>
-            <RadzenGrid TItem="ConfirmedOrder" Data="@soldItems">
-                <Columns>
-                   @*  <RadzenGridColumn TItem="ConfirmedOrder" Property="image" Title="Image">
+            <div>
+                Items Sold
+            </div>
+            <div>
+                <RadzenGrid TItem="ConfirmedOrder" Data="@soldItems">
+                    <Columns>
+                        @*  <RadzenGridColumn TItem="ConfirmedOrder" Property="image" Title="Image">
                         <Template Context="data">
                             @{
                                 @if (data.image != null)
@@ -85,17 +86,17 @@
                             }
                         </Template>
                     </RadzenGridColumn> *@
-                    <RadzenGridColumn TItem="ConfirmedOrder" Property="buyerName" Title="Buyer" />
-                    <RadzenGridColumn TItem="ConfirmedOrder" Property="itemName" Title="Item" />
-                    <RadzenGridColumn TItem="ConfirmedOrder" Property="quantity" Title="Quantity" />
-                    <RadzenGridColumn TItem="ConfirmedOrder" Property="rate" Title="Rate" />
-                    <RadzenGridColumn TItem="ConfirmedOrder" Property="total" Title="Total" />
-                </Columns>
-            </RadzenGrid>
+                        <RadzenGridColumn TItem="ConfirmedOrder" Property="buyerName" Title="Buyer" />
+                        <RadzenGridColumn TItem="ConfirmedOrder" Property="itemName" Title="Item" />
+                        <RadzenGridColumn TItem="ConfirmedOrder" Property="quantity" Title="Quantity" />
+                        <RadzenGridColumn TItem="ConfirmedOrder" Property="rate" Title="Rate" />
+                        <RadzenGridColumn TItem="ConfirmedOrder" Property="total" Title="Total" />
+                    </Columns>
+                </RadzenGrid>
+            </div>
         </div>
-    </div>
+    }
 }
-
 @code {
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
 
