@@ -36,5 +36,6 @@ namespace EcorpUI.Models
         public decimal? total { get; set; }
         public string? buyerName { get; set; }
         public string? itemName { get; set; }
+        public List<ItemImage>? itemImageList { get; set; }
     }
 }
