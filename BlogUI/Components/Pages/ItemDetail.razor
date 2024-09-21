@@ -1,9 +1,11 @@
 ﻿@page "/itemDetail"
 
+@using EcorpAPI.Models
 @using EcorpUI.Services;
 @using EcorpUI.Models;
 
 @inject ItemService itemService
+@inject CartService cartService
 @inject NavigationManager NavManager
 @inject Common common
 
@@ -109,7 +111,7 @@
                 }
             </div>
         </div>
-
+        <button class="btn btn-primary btn-sm" @onclick="@(() => AddToCart(item))">Add to Cart</button>
     }
 </div>
 
@@ -127,6 +129,17 @@
         int.TryParse(userId, out value);
 
         itemId = Convert.ToInt32(value);
+    }
+    private async Task AddToCart(Item cartItem)
+    {
+        var newData = new CartItemModel
+            {
+                itemId = cartItem.itemId,
+                quantity = cartItem.itemQuantity,
+                itemRate = cartItem.itemRate,
+
+            };
+        await cartService.AddToCart(newData);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

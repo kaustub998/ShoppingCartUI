@@ -1,0 +1,78 @@
+﻿@page "/addToCart"
+
+@using EcorpAPI.Models
+@using EcorpUI.Components
+@using EcorpUI.Services
+@using EcorpUI.Models
+@using EcorpUI.Extensions;
+
+@inject IJSRuntime jsruntime
+@inject ItemService itemService
+@inject CartService cartService
+@inject Common common
+
+<div class="modal-body">
+    <div class="form-group">
+        <label for="quantity">
+            <strong>Stock Available:</strong> @item.itemQuantity
+        </label>
+    </div>
+    <div class="form-group">
+        <label for="quantity">Select Quantity:</label>
+        <input type="number" class="form-control" @bind-value="@selectedQuantity" min="1" />
+    </div>
+</div>
+<div class="modal-footer">
+        <button class="btn btn-primary" @onclick="AddToCart">Confirm</button>
+    <button class="btn btn-secondary" @onclick="Close">Cancel</button>
+</div>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    private UserContext userContext = new UserContext();
+
+    [Parameter] public Item item { get; set; } = new Item();
+    [Parameter] public EventCallback<string> Callback { get; set; }
+
+
+    private int selectedQuantity = 1;
+
+    private async Task AddToCart()
+    {
+        var cartItem = new CartItemModel
+            {
+                itemId = item.itemId,
+                quantity = selectedQuantity,
+                itemRate = item.itemRate
+            };
+
+        ResponseModel response = await cartService.AddToCart(cartItem);
+        Close();
+        await Callback.InvokeAsync("success");
+
+        if (response.isSuccess == true)
+        {
+            
+         jsruntime.ToastrSuccess("Added To Cart Successful");
+        }
+        else
+        {
+            jsruntime.ToastrError(response.message);
+        }
+        await Close();
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userContext = await common.GetUserContext();
+        }
+    }
+    private async Task Close() => await BlazoredModal.CloseAsync();
+}

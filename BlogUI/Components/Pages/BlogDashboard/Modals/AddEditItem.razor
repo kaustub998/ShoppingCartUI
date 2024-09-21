@@ -66,6 +66,16 @@
                 <textarea class="form-control" placeholder="Enter item description" rows="5" @bind="item.itemDescription"></textarea>
             </div>
 
+            <div class="form-group">
+                <label for="quantity">Quantity:</label>
+                <input type="number" class="form-control" placeholder="Enter item quantity" @bind="item.itemQuantity" />
+            </div>
+
+            <div class="form-group">
+                <label for="rate">Rate:</label>
+                <input type="number" step="0.01" class="form-control" placeholder="Enter item rate" @bind="item.itemRate" />
+            </div>
+
             <InputFile id="profileimage" OnChange="HandleProfileChange" multiple accept=".png,.jpg,.jpeg,.gif,.tif" />
 
             @if (item.itemImageList != null)
@@ -81,7 +91,7 @@
 
 
             <div class="text-center">
-                <button class="btn btn-primary btn-lg" @onclick="SaveBlog">Save</button>
+                <button class="btn btn-primary btn-lg" @onclick="Save">Save</button>
                 <button class="btn btn-primary btn-lg" @onclick="Close">Close</button>
             </div>
         </div>
@@ -106,19 +116,17 @@
             if (file.Size > 3 * 1024 * 1024) // 3 MB in bytes
             {
                 jsruntime.ToastsWarning($"File '{file.Name}' is larger than 3 MB.");
-                continue; // Skip processing this file
+                continue;
             }
 
             var buffer = new byte[file.Size];
             await file.OpenReadStream().ReadAsync(buffer);
 
-            // Create a new BlogImage instance
             var newImage = new ItemImage
                 {
                     image = buffer
                 };
 
-            // Check if item.blogImages is null, if yes, initialize it with an empty list
             if (item.itemImageList == null)
             {
                 item.itemImageList = new List<ItemImage>();
@@ -130,11 +138,9 @@
             // Remove the image from the list
             mutableBlogImages.Add(newImage);
 
-            // Assign the modified list back to item.blogImages
             item.itemImageList = mutableBlogImages;
         }
 
-        // Trigger UI refresh
         StateHasChanged();
     }
 
@@ -170,7 +176,7 @@
         }
     }
 
-    private async Task SaveBlog()
+    private async Task Save()
     {
         var newBlog = new Item
             {

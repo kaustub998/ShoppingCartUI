@@ -4,6 +4,7 @@
 @using EcorpUI.Models
 @using EcorpUI.Services
 @using Blazored.LocalStorage;
+@using Pages.Cart.Modals;
 
 @inject ItemService itemService
 @inject CartService cartService
@@ -46,17 +47,25 @@
                     {
                         <div class="col-md-3 col-sm-6 mb-3">
                             <div class="item-card card shadow-sm">
-                                <img src="@($"data:image/png;base64,{Convert.ToBase64String(item.itemImageList.FirstOrDefault()?.image)}")" class="card-img-top" alt="@item.itemName" style="height: 180px; object-fit: cover;" />
+                                @* <img src="@($"data:image/png;base64,{Convert.ToBase64String(item.itemImageList.FirstOrDefault()?.image)}")" class="card-img-top" alt="@item.itemName" style="height: 180px; object-fit: cover;" /> *@
+                                <img src="@(!string.IsNullOrEmpty(Convert.ToBase64String(item.itemImageList?.FirstOrDefault()?.image ?? Array.Empty<byte>()))
+                                          ? $"data:image/png;base64,{Convert.ToBase64String(item.itemImageList?.FirstOrDefault()?.image)}"
+                                           : "path-to-placeholder-image.png")"
+                                     class="card-img-top"
+                                     alt="@item.itemName"
+                                     style="height: 180px; object-fit: cover;" />
+
                                 <div class="card-body">
                                     <h5 class="card-title">@item.itemName</h5>
                                     <p class="card-text text-muted">@item.itemDescription</p>
                                     <p class="card-text"><strong>By:</strong> @item.user_FullName</p>
                                     <p class="card-text"><strong>Quantity:</strong> @item.itemQuantity</p>
-                                    <p class="card-text"><strong>Rate:</strong> NPR @item.itemRate.ToString("F2")</p>
+                                    <p class="card-text"><strong>Rate:</strong> $ @item.itemRate.ToString("F2")</p>
 
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <a href="@($"itemDetail?id={item.itemId}")" class="btn btn-outline-primary btn-sm">Read More</a>
-                                        <button class="btn btn-primary btn-sm" @onclick="@(() => AddToCart(item))">Add to Cart</button>
+                                        <button class="btn btn-primary btn-sm" @onclick="@(() => OpenAddToCartModal(item))">Add to Cart</button>
+
                                     </div>
                                 </div>
                             </div>
@@ -84,8 +93,8 @@
     }
 </div>
 
-
 @code {
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
     private IEnumerable<Item> items { get; set; }
     private UserContext userContext = new UserContext();
 
@@ -95,16 +104,17 @@
     private IEnumerable<Item> paginatedItems;
     private string searchString = "";
 
-    private async Task AddToCart(Item cartItem)
-    {
-        var newData = new CartItemModel
-        {
-            itemId=cartItem.itemId,
-            quantity=cartItem.itemQuantity,
-            itemRate=cartItem.itemRate,
 
-        };
-        await cartService.AddToCart(newData);
+    private async Task OpenAddToCartModal(Item item)
+    {
+        var parameters = new ModalParameters()
+            .Add(nameof(Cart.Modals.AddToCartModal.item), item)
+            .Add(nameof(AddToCartModal.Callback), EventCallback.Factory.Create<string>(this, CallBack));
+        var options = new ModalOptions()
+            {
+                Size = ModalSize.Small
+            };
+        Modal.Show<AddToCartModal>("Add to Cart", parameters, options);
     }
 
     protected override async Task OnInitializedAsync()
@@ -172,5 +182,14 @@
     public async Task GetItemList()
     {
         items = await itemService.GetItemsListForShopPage();
+    }
+
+    public async Task CallBack(string? message)
+    {
+        if (message == "success")
+        {
+            await GetItemList();
+            StateHasChanged();
+        }
     }
 }

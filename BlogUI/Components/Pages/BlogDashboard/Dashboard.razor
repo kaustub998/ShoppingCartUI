@@ -21,7 +21,6 @@
         margin-bottom: 0; /* Remove bottom margin from cards */
     }
 </style>
-
 <div>
     <div class="d-flex justify-content-end mb-3">
         <RadzenButton Text="Add Item" Click="@AddBlog" Style="margin-right: 10px;" />
@@ -35,10 +34,19 @@
                 {
                     <div class="col-md-3 col-sm-6 mb-3">
                         <div class="item-card card shadow-sm">
-                            <img src="@($"data:image/png;base64,{Convert.ToBase64String(item.itemImageList.FirstOrDefault()?.image)}")" class="card-img-top" alt="@item.itemName" style="height: 180px; object-fit: cover;" />
+                            @* <img src="@($"data:image/png;base64,{Convert.ToBase64String(item.itemImageList.FirstOrDefault()?.image)}")" class="card-img-top" alt="@item.itemName" style="height: 180px; object-fit: cover;" /> *@
+                            <img src="@(!string.IsNullOrEmpty(Convert.ToBase64String(item.itemImageList.FirstOrDefault()?.image ?? Array.Empty<byte>()))
+                                              ? $"data:image/png;base64,{Convert.ToBase64String(item.itemImageList.FirstOrDefault()?.image)}"
+                                             : "path-to-placeholder-image.png")"
+                                 class="card-img-top"
+                                 alt="@item.itemName"
+                                 style="height: 180px; object-fit: cover;" />
+
                             <div class="card-body">
                                 <h5 class="card-title">@item.itemName</h5>
-                                <p class="card-text text-muted">@item.itemDescription</p>
+                                <p class="card-text"><strong>Description:</strong> @item.itemDescription</p>
+                                <p class="card-text"><strong>Rate:</strong> @item.itemRate</p>
+                                <p class="card-text"><strong>stock level:</strong> @item.itemQuantity</p>
                                 <p class="card-text"><strong>By:</strong> @item.user_FullName</p>
 
                                 <div class="d-flex justify-content-between align-items-center mt-3">
@@ -101,7 +109,7 @@
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
 
     private UserContext userContext = new UserContext();
-    private IEnumerable<Item> items { get; set; }
+    private IEnumerable<Item> items { get; set; } = new List<Item>();
     private IEnumerable<ConfirmedOrder> soldItems { get; set; } = new List<ConfirmedOrder>();
 
 

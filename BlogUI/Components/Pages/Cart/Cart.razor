@@ -22,7 +22,7 @@ else
 {
     <RadzenDataGrid Data="@cartItems" TItem="CartItemModel" ColumnWidth="200px" Class="table">
         <Columns>
-            <RadzenGridColumn TItem="CartItemModel" Property="image" Title="Image">
+          @*   <RadzenGridColumn TItem="CartItemModel" Property="image" Title="Image">
                 <Template Context="data">
                     @{
                         @if (data.image != null)
@@ -33,14 +33,29 @@ else
                         }
                     }
                 </Template>
+            </RadzenGridColumn> *@
+            <RadzenGridColumn TItem="CartItemModel" Title="Image">
+                <Template Context="data">
+                    @if (data.itemImageList != null && data.itemImageList.Any())
+                    {
+                        <div class="form-group">
+                            @foreach (var image in data.itemImageList)
+                            {
+                                if (image.image != null)
+                                {
+                                    <img src="@($"data:image/png;base64,{Convert.ToBase64String(image.image)}")"
+                                         alt="Item Image"
+                                         class="item-image"
+                                         style="height: 100px; width: 100px; object-fit: cover;" />
+                                }
+                            }
+                        </div>
+                    }
+                </Template>
             </RadzenGridColumn>
+
             <RadzenDataGridColumn TItem="CartItemModel" Property="itemName" Title="Item" />
             <RadzenDataGridColumn TItem="CartItemModel" Property="itemRate" Title="Price"/>
-            @* <RadzenDataGridColumn TItem="CartItemModel" Title="Quantity">
-                <Template Context="item">
-                    <RadzenNumeric Min="1" @bind-Value="item.quantity" onchange="@(() => UpdateQuantity(item))"  />
-                </Template>
-            </RadzenDataGridColumn> *@
             <RadzenDataGridColumn TItem="CartItemModel" Title="Quantity">
                 <Template Context="item">
                     <div class="d-flex align-items-center">
