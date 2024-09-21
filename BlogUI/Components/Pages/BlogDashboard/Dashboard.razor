@@ -130,6 +130,7 @@
             if (userContext.userId > 0)
             {
                 await GetItemList();
+                await GetItemSoldDetail();
                 StateHasChanged();
             }
             else
