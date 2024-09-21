@@ -82,18 +82,18 @@
             <div>
                 <RadzenGrid TItem="ConfirmedOrder" Data="@soldItems">
                     <Columns>
-                        @*  <RadzenGridColumn TItem="ConfirmedOrder" Property="image" Title="Image">
+                         <RadzenGridColumn TItem="ConfirmedOrder" Property="image" Title="Image">
                         <Template Context="data">
                             @{
-                                @if (data.image != null)
+                                @if (data.itemImageList != null && data.itemImageList.Count() > 0)
                                 {
                                     <div class="form-group">
-                                        <img src="data:image/png;base64,@Convert.ToBase64String(data.image)" alt="User Image" style="width:150px; height:150px; object-fit:cover;" />
+                                            <img src="data:image/png;base64,@Convert.ToBase64String(data.itemImageList.FirstOrDefault().image)" alt="User Image" style="width:150px; height:150px; object-fit:cover;" />
                                     </div>
                                 }
                             }
                         </Template>
-                    </RadzenGridColumn> *@
+                    </RadzenGridColumn>
                         <RadzenGridColumn TItem="ConfirmedOrder" Property="buyerName" Title="Buyer" />
                         <RadzenGridColumn TItem="ConfirmedOrder" Property="itemName" Title="Item" />
                         <RadzenGridColumn TItem="ConfirmedOrder" Property="quantity" Title="Quantity" />
@@ -130,6 +130,7 @@
             if (userContext.userId > 0)
             {
                 await GetItemList();
+                await GetItemSoldDetail();
                 StateHasChanged();
             }
             else

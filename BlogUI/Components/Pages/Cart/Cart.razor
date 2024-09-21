@@ -22,37 +22,18 @@ else
 {
     <RadzenDataGrid Data="@cartItems" TItem="CartItemModel" ColumnWidth="200px" Class="table">
         <Columns>
-          @*   <RadzenGridColumn TItem="CartItemModel" Property="image" Title="Image">
+            <RadzenDataGridColumn TItem="CartItemModel" Property="image" Title="Image">
                 <Template Context="data">
                     @{
-                        @if (data.image != null)
+                        @if (data.itemImageList != null && data.itemImageList.Count() > 0)
                         {
                             <div class="form-group">
-                                <img src="@($"data:image/png;base64,{Convert.ToBase64String(data.itemImageList.FirstOrDefault()?.image)}")" class="card-img-top" alt="@data.itemName" style="height: 180px; object-fit: cover;" />
+                                <img src="@($"data:image/png;base64,{Convert.ToBase64String(data.itemImageList.FirstOrDefault().image)}")" class="card-img-top" alt="@data.itemName" style="height: 180px; object-fit: cover;" />
                             </div>
                         }
                     }
                 </Template>
-            </RadzenGridColumn> *@
-            <RadzenGridColumn TItem="CartItemModel" Title="Image">
-                <Template Context="data">
-                    @if (data.itemImageList != null && data.itemImageList.Any())
-                    {
-                        <div class="form-group">
-                            @foreach (var image in data.itemImageList)
-                            {
-                                if (image.image != null)
-                                {
-                                    <img src="@($"data:image/png;base64,{Convert.ToBase64String(image.image)}")"
-                                         alt="Item Image"
-                                         class="item-image"
-                                         style="height: 100px; width: 100px; object-fit: cover;" />
-                                }
-                            }
-                        </div>
-                    }
-                </Template>
-            </RadzenGridColumn>
+            </RadzenDataGridColumn>
 
             <RadzenDataGridColumn TItem="CartItemModel" Property="itemName" Title="Item" />
             <RadzenDataGridColumn TItem="CartItemModel" Property="itemRate" Title="Price"/>
